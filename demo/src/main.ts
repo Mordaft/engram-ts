@@ -61,13 +61,19 @@ function renderHeader(path: string): string {
   </header>`;
 }
 
+function renderFooter(): string {
+  return `<footer class="app-footer">
+    <span>engram-ts · Browser persistent memory for TypeScript agents · The Unlicense</span>
+  </footer>`;
+}
+
 async function renderApp(): Promise<void> {
   applyTheme();
   const path = window.location.pathname;
   const content = path.startsWith('/memory/')
     ? await renderConversationDetail(memory, decodeURIComponent(path.slice('/memory/'.length)))
     : await renderMemoryLibrary(memory, searchQuery, notice);
-  app.innerHTML = `${renderHeader(path)}${content}`;
+  app.innerHTML = `${renderHeader(path)}${content}${renderFooter()}`;
   notice = '';
   createIcons({ icons: { ArrowLeft, BookOpen, Check, ChevronRight, CircleAlert, Database, FileText, Inbox, Layers3, Moon, Plus, RefreshCw, Search, Sun } });
   const contentField = document.querySelector<HTMLTextAreaElement>('#memory-content');

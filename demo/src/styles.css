@@ -1065,21 +1065,13 @@ a i[data-lucide] {
   color: var(--brand-primary);
 }
 
-/* Page footer */
-.page-footer {
-  margin: 40px 0 24px;
-  padding-top: 16px;
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  border-top: 1px solid var(--color-border);
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 24px;
   color: var(--color-muted);
-  font-size: 11px;
-}
-
-.footer-dot {
-  padding: 0 6px;
-  color: var(--brand-accent);
+  font-size: 12px;
+  border-top: 1px solid var(--color-border);
 }
 
 .visually-hidden {
@@ -1141,12 +1133,6 @@ a i[data-lucide] {
 
   .results-panel {
     order: 1;
-  }
-
-  .page-footer {
-    flex-direction: column;
-    gap: 6px;
-    text-align: center;
   }
 }
 
