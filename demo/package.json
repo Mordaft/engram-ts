@@ -1,0 +1,17 @@
+{
+  "name": "engram-ts-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@picocss/pico": "^2.1.1",
+    "engram-ts": "workspace:*",
+    "lucide": "^0.468.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.12"
+  }
+}

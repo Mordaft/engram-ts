@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+out/
+coverage/
+.vite/
+.cache/
+.parcel-cache/
+.turbo/
+playwright-report/
+test-results/
+.pnpm-store/
+.azure/
+.vscode/
+.idea/
+.github/agents/
+*.tsbuildinfo

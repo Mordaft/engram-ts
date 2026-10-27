@@ -1,0 +1,35 @@
+{
+  "name": "engram-ts",
+  "version": "0.1.0",
+  "description": "Browser-first persistent memory for TypeScript agents",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:library": "tsc -p tsconfig.build.json",
+    "build": "pnpm run build:library && pnpm --filter engram-ts-demo run build",
+    "test": "vitest run",
+    "dev": "pnpm run build:library && pnpm --filter engram-ts-demo run dev"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.0.2",
+    "dexie": "^4.2.1",
+    "lunr": "^2.3.9",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/lunr": "^2.3.7",
+    "fake-indexeddb": "^6.2.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
