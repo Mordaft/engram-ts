@@ -10,10 +10,23 @@ Requires Node.js 24 and pnpm 10.
 pnpm install
 pnpm test
 pnpm build
-pnpm dev
 ```
 
-The Vite demo runs locally and stores its sample memories in the current browser profile. It has no hosted API or cloud dependency.
+### Running the applications
+
+The monorepo includes two standalone web applications to demonstrate the library's functionality and performance:
+
+- **Demo App** (Memory Library Workbench):
+  ```sh
+  pnpm demo
+  ```
+  Runs a local Vite workbench to write, search, and view agent conversation memories in the browser profile. Full records load on-demand by ID, keeping memory overhead minimal.
+
+- **Benchmark App** (Performance Evaluation Suite):
+  ```sh
+  pnpm benchmark
+  ```
+  Runs a performance testing suite evaluating search times across **100**, **1,000**, **10,000**, and **50,000** records. It benchmarks direct sequential IndexedDB table scans against Engram-ts in-memory inverted index powered by Lunr.js, highlighting latency and speedup differences.
 
 ## Library usage
 
@@ -53,6 +66,7 @@ memory.close();
 - `src/search/` rebuilds and atomically swaps the in-memory Lunr index from Dexie data.
 - `src/adapters/` exposes LangGraph-compatible tools.
 - `demo/` is a Vite browser consumer with the memory library and detail routes.
+- `benchmark/` is a Vite browser application comparing direct IndexedDB searches with Engram-ts (Lunr.js) across 100 to 50,000 records.
 - `tests/` covers persistence, progressive disclosure, project filtering, and tool metadata.
 
 The package is marked private to prevent accidental publication. Remove that guard and review the package metadata before a release.

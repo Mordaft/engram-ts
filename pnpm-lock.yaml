@@ -34,6 +34,25 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7
 
+  benchmark:
+    dependencies:
+      '@picocss/pico':
+        specifier: ^2.1.1
+        version: 2.1.1
+      dexie:
+        specifier: ^4.2.1
+        version: 4.4.7
+      engram-ts:
+        specifier: workspace:*
+        version: link:..
+      lucide:
+        specifier: ^0.468.0
+        version: 0.468.0
+    devDependencies:
+      vite:
+        specifier: ^7.1.12
+        version: 7.3.7
+
   demo:
     dependencies:
       '@picocss/pico':

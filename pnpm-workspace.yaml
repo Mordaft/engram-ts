@@ -1,4 +1,5 @@
 packages:
   - demo
+  - benchmark
 allowBuilds:
   esbuild: true

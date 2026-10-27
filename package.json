@@ -18,7 +18,8 @@
     "build:library": "tsc -p tsconfig.build.json",
     "build": "pnpm run build:library && pnpm --filter engram-ts-demo run build",
     "test": "vitest run",
-    "dev": "pnpm run build:library && pnpm --filter engram-ts-demo run dev"
+    "demo": "pnpm run build:library && pnpm --filter engram-ts-demo run dev",
+    "benchmark": "pnpm run build:library && pnpm --filter engram-ts-benchmark run dev"
   },
   "dependencies": {
     "@langchain/core": "^1.0.2",
