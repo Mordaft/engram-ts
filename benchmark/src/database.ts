@@ -67,9 +67,9 @@ export async function bulkInsertBenchmarkData(
 }
 
 /**
- * Realiza una búsqueda directa por palabra clave en IndexedDB mediante un escaneo
- * completo de tablas (table scan / cursor) en `records` y `headers`, sin índice invertido.
- * Mide el tiempo exacto de ejecución con `performance.now()`.
+ * Performs a direct keyword search on IndexedDB via a full table scan
+ * (cursor/filter) across `records` and `headers` without an inverted index.
+ * Measures exact execution duration with `performance.now()`.
  */
 export async function searchDirectIndexedDB(
   query: string,
@@ -95,8 +95,8 @@ export async function searchDirectIndexedDB(
   const matchingMemoryIds = new Set<string>();
   const sampleList: Array<{ title: string; snippet?: string }> = [];
 
-  // Escaneo secuencial directo en la tabla de records de IndexedDB:
-  // Lee cada objeto de disco, lo deserializa y evalúa subcadenas.
+  // Direct sequential scan in IndexedDB records table:
+  // Reads each object from disk, deserializes it, and evaluates substrings.
   await benchmarkDb.records
     .filter((record) => {
       const inTitle = record.title.toLowerCase().includes(term);
@@ -116,7 +116,7 @@ export async function searchDirectIndexedDB(
       }
     });
 
-  // Escaneo secuencial en la tabla headers
+  // Sequential scan in headers table
   await benchmarkDb.headers
     .filter((header) => {
       const inTitle = header.title.toLowerCase().includes(term);

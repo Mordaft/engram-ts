@@ -43,7 +43,7 @@ if (!app) {
   throw new Error('Benchmark app root #app was not found.');
 }
 
-// Estado reactivo de la aplicación de Benchmark
+// Reactive benchmark state
 let currentDbCount = 0;
 let isBusy = false;
 let currentProgress: ProgressUpdate | null = null;
@@ -86,11 +86,11 @@ function renderHeader(): string {
         <span class="brand-badge"><i data-lucide="gauge"></i> Benchmark Suite</span>
       </div>
       <div class="header-actions">
-        <div class="db-status-pill" title="Registros actualmente guardados en IndexedDB">
+        <div class="db-status-pill" title="Records currently stored in IndexedDB">
           <span class="status-indicator ${currentDbCount > 0 ? '' : 'empty'}"></span>
-          <span><b>${currentDbCount.toLocaleString()}</b> registros en IndexedDB</span>
+          <span><b>${currentDbCount.toLocaleString()}</b> records in IndexedDB</span>
         </div>
-        <button type="button" class="theme-button" data-action="toggle-theme" aria-label="Cambiar tema" title="Cambiar tema claro/oscuro">
+        <button type="button" class="theme-button" data-action="toggle-theme" aria-label="Toggle color theme" title="Toggle color theme">
           <i data-lucide="${isDark ? 'sun' : 'moon'}"></i>
         </button>
       </div>
@@ -102,15 +102,15 @@ function renderHero(): string {
   return `
     <section class="hero-band">
       <div>
-        <span class="hero-eyebrow"><i data-lucide="zap"></i> PRUEBA DE RENDIMIENTO COMPARATIVA</span>
-        <h1>IndexedDB Directo vs Engram-ts (Lunr.js)</h1>
+        <span class="hero-eyebrow"><i data-lucide="zap"></i> COMPARATIVE PERFORMANCE BENCHMARK</span>
+        <h1>Direct IndexedDB vs Engram-ts (Lunr.js)</h1>
         <p class="hero-subtitle">
-          Evaluación de tiempos de búsqueda por palabra clave a escala con <b>100</b>, <b>1.000</b>, <b>10.000</b> y <b>50.000</b> registros en el navegador. Compara el escaneo nativo de tablas contra el índice invertido en memoria de Engram-ts.
+          Scale keyword search latency benchmark across <b>100</b>, <b>1,000</b>, <b>10,000</b>, and <b>50,000</b> records in the browser. Compares native table scans against the Engram-ts in-memory inverted index.
         </p>
       </div>
       <div class="hero-stats-badge">
         <strong>${currentDbCount > 0 ? currentDbCount.toLocaleString() : '0'}</strong>
-        <span>Registros activos</span>
+        <span>Active records</span>
       </div>
     </section>
   `;
@@ -126,14 +126,14 @@ function renderSeedingSection(): string {
         <div class="panel-title-group">
           <span class="step-number">1</span>
           <div>
-            <h2 id="step1-title">Poblar e Indexar Registros</h2>
-            <p>Selecciona el volumen de prueba para almacenar en la base de datos IndexedDB local del navegador.</p>
+            <h2 id="step1-title">Seed and Index Records</h2>
+            <p>Select a test dataset volume to store in the browser's local IndexedDB database.</p>
           </div>
         </div>
         ${
           currentDbCount > 0
             ? `<button class="outline secondary" data-action="clear-db" ${isBusy ? 'disabled' : ''} style="font-size:12px;padding:6px 12px;height:auto;">
-                <i data-lucide="trash-2"></i> Limpiar DB
+                <i data-lucide="trash-2"></i> Clear DB
               </button>`
             : ''
         }
@@ -149,12 +149,12 @@ function renderSeedingSection(): string {
                 <span class="preset-desc">
                   ${
                     size === 100
-                      ? 'Prueba rápida inicial'
+                      ? 'Quick initial test'
                       : size === 1000
-                        ? 'Carga moderada estándar'
+                        ? 'Standard moderate load'
                         : size === 10000
-                          ? 'Escala media de agente'
-                          : 'Gran volumen (50k registros)'
+                          ? 'Medium agent scale'
+                          : 'High volume (50k records)'
                   }
                 </span>
                 <button 
@@ -163,7 +163,7 @@ function renderSeedingSection(): string {
                   data-action="seed" 
                   data-size="${size}" 
                   ${isBusy ? 'disabled' : ''}>
-                  <i data-lucide="play"></i> Cargar ${size.toLocaleString()}
+                  <i data-lucide="play"></i> Load ${size.toLocaleString()}
                 </button>
               </div>
             `;
@@ -183,7 +183,7 @@ function renderSeedingSection(): string {
                 <div class="progress-bar-fill" style="width: ${currentProgress.percent}%;"></div>
               </div>
               <div class="progress-sub">
-                Los registros se insertan en lotes (batching) en IndexedDB para no bloquear el hilo del navegador.
+                Records are inserted in batches into IndexedDB to prevent blocking the browser main thread.
               </div>
             </div>
           `
@@ -196,15 +196,15 @@ function renderSeedingSection(): string {
             <div class="ingest-results-row">
               <div class="metric-pill">
                 <i data-lucide="database"></i>
-                <span>Escritura en IndexedDB: <strong>${lastSeedResult.insertDurationMs.toLocaleString()} ms</strong></span>
+                <span>IndexedDB Write: <strong>${lastSeedResult.insertDurationMs.toLocaleString()} ms</strong></span>
               </div>
               <div class="metric-pill">
                 <i data-lucide="zap"></i>
-                <span>Compilación Índice Lunr.js: <strong>${lastSeedResult.indexDurationMs.toLocaleString()} ms</strong></span>
+                <span>Lunr.js Index Compile: <strong>${lastSeedResult.indexDurationMs.toLocaleString()} ms</strong></span>
               </div>
               <div class="metric-pill">
                 <i data-lucide="timer"></i>
-                <span>Tiempo Total de Preparación: <strong>${lastSeedResult.totalDurationMs.toLocaleString()} ms</strong></span>
+                <span>Total Setup Duration: <strong>${lastSeedResult.totalDurationMs.toLocaleString()} ms</strong></span>
               </div>
             </div>
           `
@@ -223,8 +223,8 @@ function renderSearchSection(): string {
         <div class="panel-title-group">
           <span class="step-number">2</span>
           <div>
-            <h2 id="step2-title">Comparativa de Búsqueda por Palabra</h2>
-            <p>Ejecuta la misma consulta por palabra clave directamente en la tabla de IndexedDB y a través de Engram-ts con Lunr.js.</p>
+            <h2 id="step2-title">Keyword Search Benchmark</h2>
+            <p>Run the same keyword query directly on the IndexedDB table and through Engram-ts with Lunr.js.</p>
           </div>
         </div>
       </div>
@@ -236,17 +236,17 @@ function renderSearchSection(): string {
             name="query" 
             id="query-input"
             value="${escapeHtml(searchQuery)}" 
-            placeholder="Introduce una palabra a buscar (ej: database, refactor, token)..." 
+            placeholder="Enter a keyword to search (e.g. database, refactor, token)..." 
             required 
             ${!hasData || isBusy ? 'disabled' : ''} 
           />
           <button type="submit" ${!hasData || isBusy ? 'disabled' : ''}>
-            <i data-lucide="search"></i> Ejecutar Benchmark
+            <i data-lucide="search"></i> Run Benchmark
           </button>
         </div>
 
         <div class="keyword-chips">
-          <span class="chips-label">Palabras frecuentes:</span>
+          <span class="chips-label">Frequent keywords:</span>
           ${PRESET_KEYWORDS.map(
             (kw) => `
             <button 
@@ -267,8 +267,8 @@ function renderSearchSection(): string {
           ? `
             <div style="text-align:center;padding:32px 20px;background:var(--color-sunken);border-radius:8px;border:1px dashed var(--color-border);color:var(--color-muted);">
               <i data-lucide="database" style="width:32px;height:32px;margin-bottom:8px;"></i>
-              <p style="margin:0;font-weight:600;">Primero carga registros en el Paso 1 para ejecutar la prueba de búsqueda.</p>
-              <small>Prueba con 100, 1.000, 10.000 o 50.000 registros.</small>
+              <p style="margin:0;font-weight:600;">Please seed records in Step 1 first to run the search benchmark.</p>
+              <small>Try testing with 100, 1,000, 10,000, or 50,000 records.</small>
             </div>
           `
           : lastSearchResult
@@ -276,7 +276,7 @@ function renderSearchSection(): string {
             : `
             <div style="text-align:center;padding:24px 20px;background:var(--color-sunken);border-radius:8px;border:1px dashed var(--color-border);color:var(--color-muted);">
               <i data-lucide="play" style="width:28px;height:28px;margin-bottom:6px;"></i>
-              <p style="margin:0;">Haz clic en <b>Ejecutar Benchmark</b> o elige una palabra de prueba arriba.</p>
+              <p style="margin:0;">Click <b>Run Benchmark</b> or pick a test keyword above.</p>
             </div>
           `
       }
@@ -292,20 +292,20 @@ function renderSearchResults(result: SearchBenchmarkResult): string {
   return `
     <div class="speedup-callout">
       <div class="speedup-text">
-        <span>Búsqueda de la palabra <b>“${escapeHtml(result.query)}”</b> sobre <b>${result.totalRecords.toLocaleString()}</b> registros:</span>
+        <span>Searching for keyword <b>“${escapeHtml(result.query)}”</b> across <b>${result.totalRecords.toLocaleString()}</b> records:</span>
       </div>
       <div class="speedup-badge">
-        🚀 ${result.speedup}x MÁS RÁPIDO
+        🚀 ${result.speedup}x FASTER
       </div>
     </div>
 
     <div class="comparison-grid">
-      <!-- Tarjeta IndexedDB Directo -->
+      <!-- Direct IndexedDB Card -->
       <article class="engine-card idb-card">
         <div class="engine-card-header">
           <div class="engine-name">
             <i data-lucide="database" style="color:var(--color-warning);"></i>
-            <span>IndexedDB Directo</span>
+            <span>Direct IndexedDB</span>
           </div>
           <span class="engine-tag">Full Table Scan</span>
         </div>
@@ -315,21 +315,21 @@ function renderSearchResults(result: SearchBenchmarkResult): string {
         </div>
         <div class="engine-details">
           <div class="detail-item">
-            <span>Coincidencias encontradas:</span>
+            <span>Matches found:</span>
             <strong>${result.indexedDbMatches.toLocaleString()}</strong>
           </div>
           <div class="detail-item">
-            <span>Mecanismo:</span>
-            <span>Cursor / Filter en tabla IndexedDB</span>
+            <span>Mechanism:</span>
+            <span>IndexedDB table cursor / filter scan</span>
           </div>
           <div class="detail-item">
-            <span>Complejidad algorítmica:</span>
-            <span>O(N) - I/O disco + deserialización</span>
+            <span>Algorithmic complexity:</span>
+            <span>O(N) - Disk I/O + deserialization</span>
           </div>
         </div>
       </article>
 
-      <!-- Tarjeta Engram-ts (Lunr.js) -->
+      <!-- Engram-ts (Lunr.js) Card -->
       <article class="engine-card lunr-card">
         <div class="engine-card-header">
           <div class="engine-name">
@@ -344,25 +344,25 @@ function renderSearchResults(result: SearchBenchmarkResult): string {
         </div>
         <div class="engine-details">
           <div class="detail-item">
-            <span>Coincidencias encontradas:</span>
+            <span>Matches found:</span>
             <strong>${result.lunrMatches.toLocaleString()}</strong>
           </div>
           <div class="detail-item">
-            <span>Mecanismo:</span>
-            <span>Índice invertido en memoria RAM (TF-IDF)</span>
+            <span>Mechanism:</span>
+            <span>In-memory inverted index (TF-IDF)</span>
           </div>
           <div class="detail-item">
-            <span>Complejidad algorítmica:</span>
-            <span>O(k) - Búsqueda de tokens en memoria</span>
+            <span>Algorithmic complexity:</span>
+            <span>O(k) - In-memory token lookup</span>
           </div>
         </div>
       </article>
     </div>
 
-    <!-- Barra de comparación visual de latencia -->
+    <!-- Visual Latency Comparison Bar -->
     <div class="latency-visual">
       <div class="latency-bar-row">
-        <span class="latency-label">IndexedDB Directo</span>
+        <span class="latency-label">Direct IndexedDB</span>
         <div class="latency-track">
           <div class="latency-bar-fill idb-bar" style="width: ${idbWidthPercent}%;">
             ${result.indexedDbTimeMs.toFixed(2)} ms
@@ -379,15 +379,15 @@ function renderSearchResults(result: SearchBenchmarkResult): string {
       </div>
     </div>
 
-    <!-- Muestra de registros coincidentes -->
+    <!-- Top Matches Preview -->
     <div class="matches-preview">
-      <div class="preview-title">Primeras coincidencias recuperadas por Engram-ts (Top resultados):</div>
+      <div class="preview-title">Top matches retrieved by Engram-ts:</div>
       ${result.lunrSample
         .map(
           (item) => `
         <div class="match-item">
           <strong>${escapeHtml(item.title)}</strong>
-          <span>Score de relevancia Lunr: <b>${item.score}</b></span>
+          <span>Lunr relevance score: <b>${item.score}</b></span>
         </div>
       `,
         )
@@ -405,8 +405,8 @@ function renderHistorySection(): string {
         <div class="panel-title-group">
           <span class="step-number">3</span>
           <div>
-            <h2 id="step3-title">Histórico de Comparativas Ejecutadas</h2>
-            <p>Registro de las pruebas realizadas en esta sesión para 100, 1.000, 10.000 y 50.000 registros.</p>
+            <h2 id="step3-title">Benchmark Runs History</h2>
+            <p>Session log of benchmark runs across 100, 1,000, 10,000, and 50,000 records.</p>
           </div>
         </div>
       </div>
@@ -415,13 +415,13 @@ function renderHistorySection(): string {
         <table class="history-table">
           <thead>
             <tr>
-              <th>Registros</th>
-              <th>Palabra</th>
-              <th>IndexedDB Directo</th>
+              <th>Records</th>
+              <th>Keyword</th>
+              <th>Direct IndexedDB</th>
               <th>Engram-ts (Lunr)</th>
-              <th>Aceleración</th>
-              <th>Coincidencias</th>
-              <th>Hora</th>
+              <th>Speedup</th>
+              <th>Matches</th>
+              <th>Time</th>
             </tr>
           </thead>
           <tbody>
@@ -454,37 +454,37 @@ function renderArchitectureExplanation(): string {
         <div class="panel-title-group">
           <i data-lucide="layers-3" style="color:var(--brand-primary);width:22px;height:22px;"></i>
           <div>
-            <h2 id="arch-title">¿Por qué existe esta diferencia de rendimiento?</h2>
-            <p>Análisis arquitectónico de IndexedDB frente al índice invertido de Lunr.js en Engram-ts.</p>
+            <h2 id="arch-title">Why Does This Performance Difference Exist?</h2>
+            <p>Architectural breakdown of native IndexedDB vs the Lunr.js in-memory inverted index in Engram-ts.</p>
           </div>
         </div>
       </div>
 
       <div class="architecture-grid">
         <div class="arch-card">
-          <h3><i data-lucide="database" style="color:var(--color-warning);"></i> Búsqueda Directa en IndexedDB</h3>
+          <h3><i data-lucide="database" style="color:var(--color-warning);"></i> Direct Search in IndexedDB</h3>
           <p>
-            IndexedDB es una base de datos documental estructurada mediante árboles B+ orientada a claves primarias e índices exactos. 
-            <b>No cuenta con motor de búsqueda de texto completo (FTS)</b>. Para buscar una palabra en títulos o contenidos, el navegador debe realizar un <i>Full Table Scan</i>:
+            IndexedDB is a document-oriented database structured with B+ trees for primary keys and exact indexes. 
+            <b>It has no native Full-Text Search (FTS) engine</b>. To search a word in titles or contents, the browser must execute a <i>Full Table Scan</i>:
           </p>
           <ul style="margin:8px 0 0 16px;font-size:12px;color:var(--color-muted);line-height:1.5;">
-            <li>Recorrer cada registro de disco mediante cursores.</li>
-            <li>Deserializar cada objeto JS mediante Structured Clone.</li>
-            <li>Ejecutar <code>.includes(word)</code> secuencialmente en el hilo V8.</li>
-            <li>A medida que crecen los registros a 10.000 y 50.000, el tiempo crece linealmente O(N) hasta varios segundos.</li>
+            <li>Iterate over every record on disk via cursors.</li>
+            <li>Deserialize every JS object using the browser's Structured Clone algorithm.</li>
+            <li>Execute <code>.includes(word)</code> sequentially on the V8 main thread.</li>
+            <li>As records grow to 10,000 and 50,000, latency scales linearly O(N) up to several seconds.</li>
           </ul>
         </div>
 
         <div class="arch-card">
-          <h3><i data-lucide="zap" style="color:var(--brand-primary);"></i> Engram-ts gracias a Lunr.js</h3>
+          <h3><i data-lucide="zap" style="color:var(--brand-primary);"></i> Engram-ts Powered by Lunr.js</h3>
           <p>
-            Engram-ts adopta la arquitectura de Alan Buscaglia (Gentleman Programming), utilizando IndexedDB únicamente como <b>fuente de verdad duradera</b> y delegando la búsqueda a un <b>índice invertido compilado en memoria RAM</b> mediante Lunr.js:
+            Engram-ts implements Alan Buscaglia's (Gentleman Programming) architecture, using IndexedDB strictly as a <b>durable source of truth</b> and delegating retrieval to an <b>in-memory inverted index</b> compiled via Lunr.js:
           </p>
           <ul style="margin:8px 0 0 16px;font-size:12px;color:var(--color-muted);line-height:1.5;">
-            <li>Tokenización, eliminación de stop-words y stemming (raíz léxica).</li>
-            <li>Estructura de postings list en RAM: cada token apunta directamente a los IDs de memoria.</li>
-            <li>Búsqueda instantánea sub-milisegundo O(k) con ponderación por campos (title: 10x, tags: 3x, etc.).</li>
-            <li>Los agentes de IA reciben respuestas en 1-10 ms sin saturar tokens ni esperar bloqueos de I/O.</li>
+            <li>Tokenization, stop-word elimination, and linguistic stemming.</li>
+            <li>Postings list structure in RAM: each token points directly to matching memory IDs.</li>
+            <li>Instant sub-millisecond retrieval O(k) with field boosting (title: 10x, tags: 3x, etc.).</li>
+            <li>AI agents receive relevant context in 1–10 ms without bloating tokens or blocking on I/O.</li>
           </ul>
         </div>
       </div>
@@ -504,7 +504,7 @@ async function render(): Promise<void> {
       ${renderArchitectureExplanation()}
     </main>
     <footer class="app-footer">
-      <span>Engram-ts Benchmark Suite · Implementación independiente de evaluación de rendimiento · The Unlicense</span>
+      <span>Engram-ts Benchmark Suite · Independent performance evaluation tool · The Unlicense</span>
     </footer>
   `;
   createIcons({
@@ -562,7 +562,7 @@ app.addEventListener('click', async (event) => {
       const stats = await getDatabaseStats();
       currentDbCount = stats.records;
 
-      // Auto-ejecuta el primer benchmark con la palabra actual
+      // Auto-run first benchmark with the current keyword
       const searchRes = await runSearchBenchmark(searchQuery, 3);
       lastSearchResult = searchRes;
       historyEntries.unshift({
@@ -577,8 +577,8 @@ app.addEventListener('click', async (event) => {
         timestamp: new Date().toLocaleTimeString(),
       });
     } catch (err) {
-      console.error('Error al poblar datos de benchmark:', err);
-      alert('Error en benchmark: ' + String(err));
+      console.error('Error seeding benchmark data:', err);
+      alert('Benchmark error: ' + String(err));
     } finally {
       isBusy = false;
       currentProgress = null;
@@ -586,7 +586,7 @@ app.addEventListener('click', async (event) => {
     }
   } else if (action === 'clear-db') {
     if (isBusy) return;
-    if (confirm('¿Deseas vaciar la base de datos de benchmark?')) {
+    if (confirm('Are you sure you want to clear the benchmark database?')) {
       isBusy = true;
       await clearBenchmarkDB();
       currentDbCount = 0;
@@ -658,7 +658,7 @@ app.addEventListener('submit', async (event) => {
   }
 });
 
-// Inicialización de la aplicación
+// Initialize application
 async function init(): Promise<void> {
   const stats = await getDatabaseStats();
   currentDbCount = stats.records;

@@ -26,21 +26,21 @@ export function getCurrentDatasetSize(): number {
 }
 
 /**
- * Prepara la base de datos con `count` registros (100, 1.000, 10.000 o 50.000):
- * 1. Limpia la base de datos de benchmark.
- * 2. Genera los registros de prueba sintéticos y realistas.
- * 3. Almacena en la tabla de IndexedDB en lotes (batching) midiendo el tiempo exacto.
- * 4. Inicializa Engram-ts para que compile el índice invertido de Lunr.js en memoria.
+ * Prepares the database with `count` records (100, 1,000, 10,000, or 50,000):
+ * 1. Clears previous benchmark database.
+ * 2. Generates realistic synthetic benchmark records.
+ * 3. Stores into IndexedDB in batches, measuring precise write time.
+ * 4. Initializes Engram-ts to compile the Lunr.js in-memory inverted index.
  */
 export async function seedBenchmark(
   count: BenchmarkDatasetSize,
   onProgress?: (update: ProgressUpdate) => void,
 ): Promise<SeedBenchmarkResult> {
-  // 1. Limpieza
+  // 1. Clear database
   onProgress?.({
     stage: 'clearing',
     percent: 5,
-    message: 'Limpiando base de datos IndexedDB anterior...',
+    message: 'Clearing previous IndexedDB database...',
   });
   if (activeEngram) {
     activeEngram.close();
@@ -48,20 +48,20 @@ export async function seedBenchmark(
   }
   await clearBenchmarkDB();
 
-  // 2. Generación
+  // 2. Generation
   onProgress?.({
     stage: 'generating',
     percent: 15,
-    message: `Generando ${count.toLocaleString()} registros realistas en memoria...`,
+    message: `Generating ${count.toLocaleString()} realistic records in memory...`,
   });
-  await new Promise((resolve) => setTimeout(resolve, 20)); // Cede control
+  await new Promise((resolve) => setTimeout(resolve, 20)); // Yield control
   const { headers, records } = generateBenchmarkData(count);
 
-  // 3. Inserción por lotes en IndexedDB
+  // 3. Batch insertion into IndexedDB
   onProgress?.({
     stage: 'inserting',
     percent: 25,
-    message: `Insertando ${count.toLocaleString()} registros en IndexedDB...`,
+    message: `Inserting ${count.toLocaleString()} records into IndexedDB...`,
     currentCount: 0,
     totalCount: count,
   });
@@ -75,24 +75,24 @@ export async function seedBenchmark(
       onProgress?.({
         stage: 'inserting',
         percent: pct,
-        message: `Guardando en IndexedDB: ${completed.toLocaleString()} / ${total.toLocaleString()} registros (${Math.round((completed / total) * 100)}%)...`,
+        message: `Saving to IndexedDB: ${completed.toLocaleString()} / ${total.toLocaleString()} records (${Math.round((completed / total) * 100)}%)...`,
         currentCount: completed,
         totalCount: total,
       });
     },
   );
 
-  // 4. Inicialización e indexación con Engram-ts + Lunr.js
+  // 4. Initialization and indexing with Engram-ts + Lunr.js
   onProgress?.({
     stage: 'indexing',
     percent: 75,
-    message: 'Engram-ts: Leyendo IndexedDB y compilando índice invertido Lunr.js en memoria RAM...',
+    message: 'Engram-ts: Reading IndexedDB and compiling Lunr.js inverted index in RAM...',
   });
   await new Promise((resolve) => setTimeout(resolve, 30));
 
   const tIndexStart = performance.now();
   activeEngram = new Engram({ databaseName: BENCHMARK_DB_NAME });
-  // Un search activa la promesa de ready e inicialización completa del índice Lunr
+  // A search triggers the ready promise and full index initialization
   await activeEngram.search({ query: 'warmup', limit: 1 });
   const indexDurationMs = performance.now() - tIndexStart;
 
@@ -101,7 +101,7 @@ export async function seedBenchmark(
   onProgress?.({
     stage: 'done',
     percent: 100,
-    message: `¡Completado! ${count.toLocaleString()} registros almacenados e indexados con éxito.`,
+    message: `Completed! ${count.toLocaleString()} records stored and indexed successfully.`,
   });
 
   return {
@@ -113,9 +113,9 @@ export async function seedBenchmark(
 }
 
 /**
- * Ejecuta la comparativa de búsqueda por palabra:
- * - Búsqueda Directa en IndexedDB (escaneo secuencial tabla por tabla con Dexie).
- * - Búsqueda en Engram-ts (índice invertido Lunr.js en memoria RAM).
+ * Runs the search comparison for a given keyword query:
+ * - Direct IndexedDB search (sequential table scan across records and headers via Dexie).
+ * - Engram-ts search (in-memory inverted index via Lunr.js).
  */
 export async function runSearchBenchmark(
   query: string,
@@ -129,11 +129,11 @@ export async function runSearchBenchmark(
   const stats = await getDatabaseStats();
   const totalRecords = stats.records;
 
-  // Calentamiento preliminar de caché del motor V8
+  // Warm up V8 engine cache
   await searchDirectIndexedDB(query, 10);
   await activeEngram.search({ query, limit: 10 });
 
-  // 1. Medición de Búsqueda Directa en la tabla de IndexedDB
+  // 1. Measure Direct IndexedDB search
   let idbDurationTotal = 0;
   let idbCount = 0;
   let idbSamples: Array<{ title: string; snippet?: string }> = [];
@@ -146,7 +146,7 @@ export async function runSearchBenchmark(
   }
   const avgIdbMs = Number((idbDurationTotal / iterations).toFixed(2));
 
-  // 2. Medición de Búsqueda usando Engram-ts con Lunr.js
+  // 2. Measure Engram-ts with Lunr.js search
   let lunrDurationTotal = 0;
   let lunrCount = 0;
   let lunrSamples: Array<{ title: string; score: number }> = [];
@@ -164,7 +164,7 @@ export async function runSearchBenchmark(
   }
   const avgLunrMs = Number((lunrDurationTotal / iterations).toFixed(2));
 
-  // Cálculo de factor de aceleración (Speedup)
+  // Speedup multiplier calculation
   const safeLunr = Math.max(avgLunrMs, 0.05);
   const speedup = Number((avgIdbMs / safeLunr).toFixed(1));
 
