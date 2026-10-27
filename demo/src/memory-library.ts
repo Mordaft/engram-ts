@@ -47,6 +47,6 @@ export async function renderMemoryLibrary(memory: Engram, query: string, notice:
         <footer class="index-footer"><span class="index-pulse"></span><span>Derived index is ready</span><span class="index-footer-note">Content stays in IndexedDB</span></footer>
       </section>
     </div>
-    <footer class="page-footer"><span>engram-ts <span class="footer-dot">/</span> local memory, on your terms</span><span>IndexedDB is the source of truth</span></footer>
+    <footer class="page-footer"><span>engram-ts <span class="footer-dot">/</span> local memory, on your terms</span><span>IndexedDB is the source of truth · The Unlicense</span></footer>
   </main>`;
 }

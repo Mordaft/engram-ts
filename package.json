@@ -4,7 +4,7 @@
   "description": "Browser-first persistent memory for TypeScript agents",
   "type": "module",
   "private": true,
-  "license": "MIT",
+  "license": "Unlicense",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

@@ -44,8 +44,21 @@ function applyTheme(): void {
 
 function renderHeader(path: string): string {
   const detailActive = path.startsWith('/memory/');
-  return `<header class="app-header"><a class="brand" data-route href="/" aria-label="Engram home"><span class="brand-mark">E</span><span>engram<span class="brand-suffix">-ts</span></span></a><span class="local-label"><span></span>Local browser memory</span><button type="button" class="theme-button" data-action="theme-toggle" aria-label="Toggle color theme" title="Toggle color theme"><i data-lucide="${document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon'}"></i></button></header>
-  <nav class="app-nav" aria-label="Primary navigation"><a data-route href="/" class="${detailActive ? '' : 'active'}"><i data-lucide="book-open"></i>Memory library</a>${detailActive ? `<a data-route href="${escapeHtml(path)}" class="active"><i data-lucide="file-text"></i>Conversation detail</a>` : ''}</nav>`;
+  return `<header class="app-header">
+    <div class="brand-group">
+      <a class="brand" data-route href="/" aria-label="Engram home">
+        <span class="brand-mark">E</span>
+        <span>engram<span class="brand-suffix">-ts</span></span>
+      </a>
+      <span class="brand-badge"><i data-lucide="book-open"></i> Memory library</span>
+    </div>
+    <div class="header-actions">
+      <span class="local-label"><span></span>Local browser memory</span>
+      <button type="button" class="theme-button" data-action="theme-toggle" aria-label="Toggle color theme" title="Toggle color theme">
+        <i data-lucide="${document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon'}"></i>
+      </button>
+    </div>
+  </header>`;
 }
 
 async function renderApp(): Promise<void> {

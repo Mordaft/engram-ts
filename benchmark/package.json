@@ -1,6 +1,7 @@
 {
   "name": "engram-ts-benchmark",
   "private": true,
+  "license": "Unlicense",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5174 --open",

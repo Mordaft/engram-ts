@@ -504,7 +504,7 @@ async function render(): Promise<void> {
       ${renderArchitectureExplanation()}
     </main>
     <footer class="app-footer">
-      <span>Engram-ts Benchmark Suite · Implementación independiente de evaluación de rendimiento · MIT License</span>
+      <span>Engram-ts Benchmark Suite · Implementación independiente de evaluación de rendimiento · The Unlicense</span>
     </footer>
   `;
   createIcons({
