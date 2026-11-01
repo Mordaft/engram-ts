@@ -12,6 +12,6 @@
     "lucide": "^0.468.0"
   },
   "devDependencies": {
-    "vite": "^7.1.12"
+    "vite": "^8.3.5"
   }
 }
