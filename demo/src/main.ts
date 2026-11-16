@@ -10,13 +10,16 @@ import {
   CircleAlert,
   Database,
   FileText,
+  GitBranch,
   Inbox,
   Layers3,
+  Link,
   Moon,
   Plus,
   RefreshCw,
   Search,
   Sun,
+  Tag,
 } from 'lucide';
 import { renderConversationDetail } from './conversation-detail';
 import { escapeHtml } from './html';
@@ -75,7 +78,27 @@ async function renderApp(): Promise<void> {
     : await renderMemoryLibrary(memory, searchQuery, notice);
   app.innerHTML = `${renderHeader(path)}${content}${renderFooter()}`;
   notice = '';
-  createIcons({ icons: { ArrowLeft, BookOpen, Check, ChevronRight, CircleAlert, Database, FileText, Inbox, Layers3, Moon, Plus, RefreshCw, Search, Sun } });
+  createIcons({
+    icons: {
+      ArrowLeft,
+      BookOpen,
+      Check,
+      ChevronRight,
+      CircleAlert,
+      Database,
+      FileText,
+      GitBranch,
+      Inbox,
+      Layers3,
+      Link,
+      Moon,
+      Plus,
+      RefreshCw,
+      Search,
+      Sun,
+      Tag,
+    },
+  });
   const contentField = document.querySelector<HTMLTextAreaElement>('#memory-content');
   contentField?.addEventListener('input', () => {
     contentField.setAttribute('aria-invalid', String(contentField.value.trim().length === 0));
@@ -88,8 +111,10 @@ app.addEventListener('click', (event) => {
   const routeLink = target.closest<HTMLAnchorElement>('a[data-route]');
   if (routeLink && routeLink.origin === window.location.origin) {
     event.preventDefault();
-    if (routeLink.pathname === '/') searchQuery = '';
-    window.history.pushState(null, '', routeLink.pathname);
+    if (routeLink.pathname === '/') {
+      searchQuery = routeLink.search ? new URLSearchParams(routeLink.search).get('q') ?? '' : '';
+    }
+    window.history.pushState(null, '', routeLink.href);
     void renderApp();
     return;
   }
@@ -119,12 +144,32 @@ app.addEventListener('submit', async (event) => {
     const content = String(formData.get('content') ?? '').trim();
     const project = String(formData.get('project') ?? '').trim();
     if (!title || !content || !project) return;
-    const tags = String(formData.get('tags') ?? '').split(',').map((tag) => tag.trim()).filter(Boolean);
+    const tags = String(formData.get('tags') ?? '')
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    const rawEntities = String(formData.get('entities') ?? '').trim();
+    const entities = rawEntities
+      ? rawEntities
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .map((item) => {
+            const parts = item.split(':').map((s) => s.trim());
+            const entity = parts[0];
+            const relation = parts[1] || 'modifies';
+            return { entity, relation };
+          })
+          .filter((e) => Boolean(e.entity))
+      : [];
+
     await memory.save({
       title,
       type: String(formData.get('type') ?? 'decision'),
       project,
       ...(tags.length > 0 ? { tags } : {}),
+      ...(entities.length > 0 ? { entities } : {}),
       records: [{ title, content, ...(tags.length > 0 ? { tags } : {}) }],
     });
     searchQuery = '';

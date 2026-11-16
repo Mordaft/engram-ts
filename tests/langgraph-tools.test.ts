@@ -19,4 +19,48 @@ describe('createLangGraphMemoryTools', () => {
     }
     memory.close();
   });
+
+  it('saves and searches memories using entities through LangGraph tools', async () => {
+    const memory = new Engram({ databaseName: `engram-tools-${crypto.randomUUID()}` });
+    const [searchTool, getTool, saveTool] = createLangGraphMemoryTools(memory);
+
+    // Save with entities
+    const saveResponseJson = await saveTool.invoke({
+      title: 'Decoupled memory store from SQLite',
+      type: 'architecture',
+      project: 'engram-ts',
+      tags: ['storage', 'dexie'],
+      entities: [
+        { entity: 'DexieMemoryStore', relation: 'implements' },
+        { entity: 'src/storage/memory-store.ts', relation: 'modifies' },
+      ],
+      records: [
+        {
+          title: 'Browser persistence layer',
+          content: 'Implemented DexieMemoryStore conforming to MemoryStore contract.',
+        },
+      ],
+    });
+
+    const savedHeader = JSON.parse(saveResponseJson);
+    expect(savedHeader.id).toBeDefined();
+    expect(savedHeader.entities).toHaveLength(2);
+
+    // Search by entity
+    const searchResponseJson = await searchTool.invoke({
+      entity: 'DexieMemoryStore',
+      relation: 'implements',
+    });
+    const searchResults = JSON.parse(searchResponseJson);
+    expect(searchResults).toHaveLength(1);
+    expect(searchResults[0].header.id).toBe(savedHeader.id);
+
+    // Get full document
+    const getResponseJson = await getTool.invoke({ id: savedHeader.id });
+    const document = JSON.parse(getResponseJson);
+    expect(document.header.title).toBe('Decoupled memory store from SQLite');
+    expect(document.relations).toHaveLength(2);
+
+    memory.close();
+  });
 });

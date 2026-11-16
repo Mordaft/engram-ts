@@ -8,6 +8,7 @@ interface SearchDocument {
   type: string;
   project: string;
   tags: string;
+  entities: string;
   content: string;
 }
 
@@ -28,8 +29,8 @@ export class LunrMemoryIndex {
     return nextRefresh;
   }
 
-  async search(query: string, project?: string, limit = 20): Promise<MemorySearchResult[]> {
-    const normalizedQuery = query.trim().replace(/[+\-:&|!(){}\[\]^"~*?:\\/]/g, ' ').trim();
+  async search(query?: string, project?: string, limit = 20): Promise<MemorySearchResult[]> {
+    const normalizedQuery = (query ?? '').trim().replace(/[+\-:&|!(){}\[\]^"~*?:\\/]/g, ' ').trim();
     if (!this.index) {
       await this.initialize();
     }
@@ -71,19 +72,28 @@ export class LunrMemoryIndex {
       recordsByMemory.set(record.memoryId, current);
     }
 
-    const documents: SearchDocument[] = headers.map((header) => ({
-      id: header.id,
-      title: header.title,
-      type: header.type,
-      project: header.project,
-      tags: header.tags.join(' '),
-      content: (recordsByMemory.get(header.id) ?? [])
-        .map((record) => `${record.title} ${record.content} ${record.tags.join(' ')}`)
-        .join(' '),
-    }));
+    const documents: SearchDocument[] = headers.map((header) => {
+      const entityTokens = (header.entities ?? [])
+        .map((e) => `${e.entity} ${e.relation} ${e.entity}:${e.relation}`)
+        .join(' ');
+
+      return {
+        id: header.id,
+        title: header.title,
+        type: header.type,
+        project: header.project,
+        tags: header.tags.join(' '),
+        entities: entityTokens,
+        content: (recordsByMemory.get(header.id) ?? [])
+          .map((record) => `${record.title} ${record.content} ${record.tags.join(' ')}`)
+          .join(' '),
+      };
+    });
+
     const nextIndex = lunr(function buildIndex() {
       this.ref('id');
       this.field('title', { boost: 10 });
+      this.field('entities', { boost: 8 });
       this.field('type', { boost: 5 });
       this.field('project', { boost: 4 });
       this.field('tags', { boost: 3 });

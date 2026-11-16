@@ -15,16 +15,53 @@ export async function renderConversationDetail(memory: Engram, memoryId: string)
     return `<main class="workbench-main detail-main"><a class="back-link" data-route href="/"><i data-lucide="arrow-left"></i>Memory library</a><section class="empty-panel"><div class="empty-icon"><i data-lucide="inbox"></i></div><strong>No records in this memory</strong><p>This memory has no conversation records to display.</p><a class="outline-link" data-route href="/"><i data-lucide="arrow-left"></i>Back to library</a></section></main>`;
   }
 
-  const relatedResults = await memory.search({ query: 'MCP stdio transport', limit: 6 });
+  const entities = document.header.entities ?? [];
+  const primaryEntity = entities[0]?.entity;
+
+  const relatedResults = primaryEntity
+    ? await memory.search({ entity: primaryEntity, limit: 6 })
+    : await memory.search({ query: 'MCP stdio transport', limit: 6 });
+
   const related = relatedResults.filter(({ header }) => header.id !== memoryId);
-  const records = document.records.map((record) => `<article class="record-entry"><div class="record-topline"><span class="record-index">${String(document.records.indexOf(record) + 1).padStart(2, '0')}</span><time datetime="${escapeHtml(record.createdAt)}">${escapeHtml(record.createdAt.slice(0, 10))}</time></div><h3>${escapeHtml(record.title)}</h3><p>${escapeHtml(record.content)}</p><div class="tag-list">${record.tags.map((tag) => `<span class="memory-tag">${escapeHtml(tag)}</span>`).join('')}</div></article>`).join('');
+
+  const entitiesSection = entities.length > 0
+    ? `<div class="entities-summary">
+        <h4><i data-lucide="git-branch"></i> Connected Codebase Entities (${entities.length})</h4>
+        <div class="entity-chips">
+          ${entities
+            .map(
+              (e) =>
+                `<a class="entity-badge" data-route href="/?q=entity:${encodeURIComponent(e.entity)}" title="Find memories related to ${escapeHtml(e.entity)}"><small class="rel-${escapeHtml(e.relation)}">${escapeHtml(e.relation)}</small><code>${escapeHtml(e.entity)}</code></a>`,
+            )
+            .join('')}
+        </div>
+      </div>`
+    : '';
+
+  const records = document.records
+    .map(
+      (record) =>
+        `<article class="record-entry"><div class="record-topline"><span class="record-index">${String(document.records.indexOf(record) + 1).padStart(2, '0')}</span><time datetime="${escapeHtml(record.createdAt)}">${escapeHtml(record.createdAt.slice(0, 10))}</time></div><h3>${escapeHtml(record.title)}</h3><p>${escapeHtml(record.content)}</p><div class="tag-list">${record.tags.map((tag) => `<span class="memory-tag">${escapeHtml(tag)}</span>`).join('')}</div></article>`,
+    )
+    .join('');
+
   const relatedPanel = related.length > 0
     ? `<div class="related-list">${related.map(({ header }) => `<a data-route href="/memory/${encodeURIComponent(header.id)}" class="related-item"><span>${escapeHtml(header.title)}</span><i data-lucide="chevron-right"></i></a>`).join('')}</div>`
-    : `<div class="empty-panel related-empty"><div class="empty-icon"><i data-lucide="search"></i></div><strong>No related memories</strong><p>No records matched the filter <b>MCP stdio transport</b>.</p><span class="filter-chip">FILTER · MCP STDIO TRANSPORT</span><a class="outline-link" data-route href="/"><i data-lucide="book-open"></i>Browse library</a></div>`;
+    : `<div class="empty-panel related-empty"><div class="empty-icon"><i data-lucide="search"></i></div><strong>No related memories</strong><p>${primaryEntity ? `No other records linked to entity <b>${escapeHtml(primaryEntity)}</b>.` : 'No records matched.'}</p>${primaryEntity ? `<span class="filter-chip">ENTITY · ${escapeHtml(primaryEntity)}</span>` : ''}<a class="outline-link" data-route href="/"><i data-lucide="book-open"></i>Browse library</a></div>`;
 
   return `<main class="workbench-main detail-main"><a class="back-link" data-route href="/"><i data-lucide="arrow-left"></i>Memory library</a>
     <section class="detail-heading"><div class="detail-heading-icon"><i data-lucide="file-text"></i></div><div><p class="kicker">${escapeHtml(document.header.type)} <span class="footer-dot">/</span> ${escapeHtml(document.header.project)}</p><h1>${escapeHtml(document.header.title)}</h1><p>${document.records.length} full records · saved ${escapeHtml(document.header.createdAt.slice(0, 10))}</p></div><span class="index-badge"><span></span>Indexed</span></section>
-    <div class="detail-layout"><section class="surface-panel records-panel"><div class="panel-heading"><div><p class="kicker">FULL CONTENT</p><h2><i data-lucide="layers-3"></i>Conversation records</h2></div><span class="result-count">${String(document.records.length).padStart(2, '0')} <small>RECORDS</small></span></div><div class="record-list">${records}</div></section>
-      <aside class="surface-panel related-panel"><div class="panel-heading"><div><p class="kicker">DISCOVERY</p><h2><i data-lucide="search"></i>Related memories</h2></div></div>${relatedPanel}<div class="disclosure-note"><i data-lucide="database"></i><span>Full content was loaded only after opening this memory by ID.</span></div></aside></div>
+    <div class="detail-layout">
+      <section class="surface-panel records-panel">
+        <div class="panel-heading"><div><p class="kicker">FULL CONTENT</p><h2><i data-lucide="layers-3"></i>Conversation records</h2></div><span class="result-count">${String(document.records.length).padStart(2, '0')} <small>RECORDS</small></span></div>
+        ${entitiesSection}
+        <div class="record-list">${records}</div>
+      </section>
+      <aside class="surface-panel related-panel">
+        <div class="panel-heading"><div><p class="kicker">GRAPH & DISCOVERY</p><h2><i data-lucide="search"></i>Related memories</h2></div></div>
+        ${relatedPanel}
+        <div class="disclosure-note"><i data-lucide="database"></i><span>Full content was loaded only after opening this memory by ID.</span></div>
+      </aside>
+    </div>
   </main>`;
 }

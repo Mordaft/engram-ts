@@ -1,7 +1,20 @@
-import type { MemoryHeader, MemoryRecord } from 'engram-ts';
+import type { MemoryHeader, MemoryRecord, MemoryRelationRecord } from 'engram-ts';
 
 const TYPES = ['decision', 'architecture', 'implementation', 'bugfix', 'convention'] as const;
 const PROJECTS = ['engram-ts', 'auth-service', 'gateway', 'agent-core', 'data-pipeline'] as const;
+
+const CODEBASE_ENTITIES = [
+  'src/auth/jwt-service.ts',
+  'src/storage/dexie-store.ts',
+  'src/search/lunr-index.ts',
+  'PostgresConnectionPool',
+  'RedisCacheManager',
+  'AgentToolRegistry',
+  'StreamPipelineBuffer',
+  'ZodValidationBoundary',
+] as const;
+
+const RELATIONS = ['modifies', 'implements', 'fixes', 'depends_on', 'deprecates', 'refactors', 'defines'] as const;
 
 const TOPICS = [
   {
@@ -80,14 +93,16 @@ const MODIFIERS = [
 ];
 
 /**
- * Deterministically generates N realistic headers and records matching engram-ts schema.
+ * Deterministically generates N realistic headers, records, and entity relations matching engram-ts schema.
  */
 export function generateBenchmarkData(count: number): {
   headers: MemoryHeader[];
   records: MemoryRecord[];
+  relations: MemoryRelationRecord[];
 } {
   const headers: MemoryHeader[] = new Array(count);
   const records: MemoryRecord[] = new Array(count);
+  const relations: MemoryRelationRecord[] = new Array(count);
   const now = new Date().toISOString();
 
   for (let i = 0; i < count; i++) {
@@ -95,14 +110,18 @@ export function generateBenchmarkData(count: number): {
     const modifier = MODIFIERS[(i * 7) % MODIFIERS.length]!;
     const type = TYPES[(i * 3) % TYPES.length]!;
     const project = PROJECTS[(i * 11) % PROJECTS.length]!;
+    const entityName = CODEBASE_ENTITIES[i % CODEBASE_ENTITIES.length]!;
+    const relationType = RELATIONS[(i * 3) % RELATIONS.length]!;
 
     const sequenceId = (i + 1).toString().padStart(5, '0');
     const memoryId = `bench-mem-${sequenceId}-${crypto.randomUUID().slice(0, 8)}`;
     const recordId = `bench-rec-${sequenceId}-${crypto.randomUUID().slice(0, 8)}`;
+    const relationId = `bench-rel-${sequenceId}-${crypto.randomUUID().slice(0, 8)}`;
 
     const title = `[#${sequenceId}] ${topicItem.title} - ${modifier}`;
     const content = `${topicItem.content} Evaluation step ${i + 1}: verified in project ${project} using ${type} conventions. ${modifier}.`;
     const tags = [...topicItem.tags, `batch-${Math.floor(i / 1000)}`];
+    const entities = [{ entity: entityName, relation: relationType }];
 
     headers[i] = {
       id: memoryId,
@@ -110,6 +129,7 @@ export function generateBenchmarkData(count: number): {
       type,
       project,
       tags,
+      entities,
       recordCount: 1,
       createdAt: now,
       updatedAt: now,
@@ -123,7 +143,16 @@ export function generateBenchmarkData(count: number): {
       tags,
       createdAt: now,
     };
+
+    relations[i] = {
+      id: relationId,
+      memoryId,
+      entity: entityName,
+      relation: relationType,
+      project,
+      createdAt: now,
+    };
   }
 
-  return { headers, records };
+  return { headers, records, relations };
 }

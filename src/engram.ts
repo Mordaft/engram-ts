@@ -42,9 +42,27 @@ export class Engram {
     return header;
   }
 
-  async search(options: SearchMemoriesOptions): Promise<MemorySearchResult[]> {
+  async search(options: SearchMemoriesOptions = {}): Promise<MemorySearchResult[]> {
     await this.ready;
-    return this.searchIndex.search(options.query, options.project, options.limit);
+    const { query, entity, relation, project, limit } = options;
+
+    if (entity) {
+      const entityMemories = await this.store.getMemoriesByEntity(entity, relation, project);
+      if (!query || !query.trim()) {
+        const sliceLimit = limit !== undefined ? Math.max(0, limit) : 20;
+        return entityMemories.slice(0, sliceLimit).map((header) => ({ header, score: 1 }));
+      }
+      const textResults = await this.searchIndex.search(query, project, limit);
+      const entityMemoryIdSet = new Set(entityMemories.map((h) => h.id));
+      return textResults.filter(({ header }) => entityMemoryIdSet.has(header.id));
+    }
+
+    return this.searchIndex.search(query, project, limit);
+  }
+
+  async getByEntity(entity: string, relation?: string, project?: string): Promise<MemoryHeader[]> {
+    await this.ready;
+    return this.store.getMemoriesByEntity(entity, relation, project);
   }
 
   async getById(id: string): Promise<MemoryDocument | undefined> {

@@ -9,15 +9,52 @@ function renderRows(headers: MemoryHeader[]): string {
   if (headers.length === 0) {
     return `<div class="empty-inline"><i data-lucide="search"></i><span>No matching memories. Try another phrase or save a new one.</span></div>`;
   }
-  return `<figure class="table-wrap"><table class="memory-table"><thead><tr><th scope="col">Memory</th><th scope="col">Type</th><th scope="col">Project</th><th scope="col">Records</th><th scope="col">Index</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead><tbody>${headers.map((header) => `<tr><td><strong>${escapeHtml(header.title)}</strong><small>${escapeHtml(header.tags.slice(0, 3).join(' · ') || 'No tags')}</small></td><td>${escapeHtml(header.type)}</td><td>${escapeHtml(header.project)}</td><td>${header.recordCount}</td><td><span class="index-badge"><span></span>Ready</span></td><td><a class="open-memory" data-route href="/memory/${encodeURIComponent(header.id)}" aria-label="Open ${escapeHtml(header.title)}" title="Open memory"><i data-lucide="chevron-right"></i></a></td></tr>`).join('')}</tbody></table></figure>`;
+  return `<figure class="table-wrap"><table class="memory-table"><thead><tr><th scope="col">Memory</th><th scope="col">Type</th><th scope="col">Project</th><th scope="col">Records</th><th scope="col">Index</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead><tbody>${headers
+    .map((header) => {
+      const entityBadges = (header.entities ?? []).length > 0
+        ? `<div class="entity-chips">${header.entities
+            .slice(0, 3)
+            .map(
+              (e) =>
+                `<a class="entity-badge" data-route href="/?q=entity:${encodeURIComponent(e.entity)}" title="Filter memories for ${escapeHtml(e.entity)}"><small class="rel-${escapeHtml(e.relation)}">${escapeHtml(e.relation)}</small><code>${escapeHtml(e.entity)}</code></a>`,
+            )
+            .join('')}</div>`
+        : '';
+
+      return `<tr><td><strong>${escapeHtml(header.title)}</strong><small>${escapeHtml(header.tags.slice(0, 3).join(' · ') || 'No tags')}</small>${entityBadges}</td><td>${escapeHtml(header.type)}</td><td>${escapeHtml(header.project)}</td><td>${header.recordCount}</td><td><span class="index-badge"><span></span>Ready</span></td><td><a class="open-memory" data-route href="/memory/${encodeURIComponent(header.id)}" aria-label="Open ${escapeHtml(header.title)}" title="Open memory"><i data-lucide="chevron-right"></i></a></td></tr>`;
+    })
+    .join('')}</tbody></table></figure>`;
 }
 
 export async function renderMemoryLibrary(memory: Engram, query: string, notice: string): Promise<string> {
   let stateMarkup = '';
   let rows = '';
   let count = 0;
+
+  // Support smart query parsing: e.g. "entity:UserService" or "serializer entity:src/auth/jwt.ts"
+  let queryText = query.trim();
+  let filterEntity: string | undefined;
+  let filterRelation: string | undefined;
+
+  const entityMatch = queryText.match(/entity:([^\s]+)/i);
+  if (entityMatch) {
+    filterEntity = entityMatch[1];
+    queryText = queryText.replace(entityMatch[0], '').trim();
+  }
+
+  const relMatch = queryText.match(/rel(?:ation)?:([^\s]+)/i);
+  if (relMatch) {
+    filterRelation = relMatch[1];
+    queryText = queryText.replace(relMatch[0], '').trim();
+  }
+
   try {
-    const results = await memory.search({ query, limit: 50 });
+    const results = await memory.search({
+      query: queryText || undefined,
+      entity: filterEntity,
+      relation: filterRelation,
+      limit: 50,
+    });
     count = results.length;
     rows = renderRows(results.map(({ header }) => header));
   } catch {
@@ -32,13 +69,14 @@ export async function renderMemoryLibrary(memory: Engram, query: string, notice:
     </article>
     ${notice ? `<p class="notice" role="status"><i data-lucide="check"></i>${escapeHtml(notice)}</p>` : ''}
     <section class="page-title-row" aria-labelledby="library-title"><div><p class="kicker">MEMORY LIBRARY</p><h2 id="library-title"><i data-lucide="book-open"></i>Find a thread worth keeping</h2><p class="section-description">${count} compact ${count === 1 ? 'header' : 'headers'} · full records load by ID</p></div><span class="storage-chip"><span></span>Browser storage</span></section>
-    <form class="search-bar" data-form="search" role="search"><label class="visually-hidden" for="memory-search">Search memories</label><i data-lucide="search"></i><input id="memory-search" name="query" type="search" placeholder="Search titles, decisions, tags, or record text..." value="${escapeHtml(query)}" /><button type="submit">Search</button></form>
+    <form class="search-bar" data-form="search" role="search"><label class="visually-hidden" for="memory-search">Search memories</label><i data-lucide="search"></i><input id="memory-search" name="query" type="search" placeholder="Search keywords, or filter by entity:UserService or entity:src/auth/jwt.ts..." value="${escapeHtml(query)}" /><button type="submit">Search</button></form>
     <div class="library-layout">
       <section id="new-memory" class="surface-panel form-panel" aria-labelledby="new-memory-title"><div class="panel-heading"><div><p class="kicker">CAPTURE</p><h2 id="new-memory-title"><i data-lucide="plus"></i>New memory</h2></div><span class="step-mark">01</span></div>
         <form data-form="save" class="memory-form"><label for="memory-title">Title</label><input id="memory-title" name="title" type="text" placeholder="e.g. Decision on index rotation" required maxlength="140" />
           <div class="form-pair"><div><label for="memory-type">Type</label><select id="memory-type" name="type"><option>decision</option><option>architecture</option><option>implementation</option><option>bugfix</option><option>convention</option></select></div><div><label for="memory-project">Project</label><input id="memory-project" name="project" type="text" value="engram-ts" required /></div></div>
           <label for="memory-content">Conversation summary</label><textarea id="memory-content" name="content" rows="6" placeholder="What changed, why it mattered, and what to remember..." required aria-invalid="true" aria-describedby="content-guidance"></textarea><small id="content-guidance" class="field-warning">A focused summary keeps future search useful.</small>
           <label for="memory-tags">Tags <span class="label-optional">optional</span></label><input id="memory-tags" name="tags" type="text" placeholder="dexie, indexing, tokens" />
+          <label for="memory-entities">Connected Entities & Relations <span class="label-optional">optional</span></label><input id="memory-entities" name="entities" type="text" placeholder="e.g. src/auth/jwt.ts:fixes, UserService:depends_on" /><small class="field-hint" style="color: var(--color-muted); font-size: 11px; margin-top: -6px; display: block;">Format: <code>entity:relation</code> (comma-separated)</small>
           <button type="submit" class="save-button"><i data-lucide="plus"></i>Save memory</button>
         </form>
       </section>

@@ -1,3 +1,30 @@
+export const RELATION_TYPES = [
+  'modifies',
+  'implements',
+  'fixes',
+  'depends_on',
+  'deprecates',
+  'refactors',
+  'defines',
+] as const;
+
+export type RelationType = (typeof RELATION_TYPES)[number] | (string & {});
+
+export interface EntityRelation {
+  entity: string;
+  relation: RelationType;
+  type?: string;
+}
+
+export interface MemoryRelationRecord {
+  id: string;
+  memoryId: string;
+  entity: string;
+  relation: string;
+  project: string;
+  createdAt: string;
+}
+
 export interface MemoryRecordInput {
   title: string;
   content: string;
@@ -10,6 +37,7 @@ export interface CreateMemoryInput {
   type: string;
   project: string;
   tags?: string[];
+  entities?: EntityRelation[];
   records: MemoryRecordInput[];
 }
 
@@ -19,6 +47,7 @@ export interface MemoryHeader {
   type: string;
   project: string;
   tags: string[];
+  entities: EntityRelation[];
   recordCount: number;
   createdAt: string;
   updatedAt: string;
@@ -34,10 +63,13 @@ export interface MemoryRecord extends MemoryRecordInput {
 export interface MemoryDocument {
   header: MemoryHeader;
   records: MemoryRecord[];
+  relations?: MemoryRelationRecord[];
 }
 
 export interface SearchMemoriesOptions {
-  query: string;
+  query?: string;
+  entity?: string;
+  relation?: string;
   project?: string;
   limit?: number;
 }

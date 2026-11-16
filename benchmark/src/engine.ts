@@ -28,9 +28,9 @@ export function getCurrentDatasetSize(): number {
 /**
  * Prepares the database with `count` records (100, 1,000, 10,000, or 50,000):
  * 1. Clears previous benchmark database.
- * 2. Generates realistic synthetic benchmark records.
+ * 2. Generates realistic synthetic benchmark records, headers, and entity relations.
  * 3. Stores into IndexedDB in batches, measuring precise write time.
- * 4. Initializes Engram-ts to compile the Lunr.js in-memory inverted index.
+ * 4. Initializes Engram-ts to compile the Lunr.js in-memory inverted index and relation indexes.
  */
 export async function seedBenchmark(
   count: BenchmarkDatasetSize,
@@ -52,16 +52,16 @@ export async function seedBenchmark(
   onProgress?.({
     stage: 'generating',
     percent: 15,
-    message: `Generating ${count.toLocaleString()} realistic records in memory...`,
+    message: `Generating ${count.toLocaleString()} realistic records and entity relations in memory...`,
   });
   await new Promise((resolve) => setTimeout(resolve, 20)); // Yield control
-  const { headers, records } = generateBenchmarkData(count);
+  const { headers, records, relations } = generateBenchmarkData(count);
 
   // 3. Batch insertion into IndexedDB
   onProgress?.({
     stage: 'inserting',
     percent: 25,
-    message: `Inserting ${count.toLocaleString()} records into IndexedDB...`,
+    message: `Inserting ${count.toLocaleString()} records & relations into IndexedDB...`,
     currentCount: 0,
     totalCount: count,
   });
@@ -69,6 +69,7 @@ export async function seedBenchmark(
   const insertDurationMs = await bulkInsertBenchmarkData(
     headers,
     records,
+    relations,
     2000,
     (completed, total) => {
       const pct = 25 + Math.round((completed / total) * 45);
@@ -101,7 +102,7 @@ export async function seedBenchmark(
   onProgress?.({
     stage: 'done',
     percent: 100,
-    message: `Completed! ${count.toLocaleString()} records stored and indexed successfully.`,
+    message: `Completed! ${count.toLocaleString()} records & relations stored and indexed successfully.`,
   });
 
   return {
@@ -113,9 +114,9 @@ export async function seedBenchmark(
 }
 
 /**
- * Runs the search comparison for a given keyword query:
- * - Direct IndexedDB search (sequential table scan across records and headers via Dexie).
- * - Engram-ts search (in-memory inverted index via Lunr.js).
+ * Runs the search comparison for a given keyword query or entity filter:
+ * - Direct IndexedDB search (sequential unindexed table scan across records and headers via Dexie).
+ * - Engram-ts search (in-memory inverted index via Lunr.js + compound IndexedDB [entity+relation] lookup).
  */
 export async function runSearchBenchmark(
   query: string,
@@ -129,9 +130,29 @@ export async function runSearchBenchmark(
   const stats = await getDatabaseStats();
   const totalRecords = stats.records;
 
+  let filterEntity: string | undefined;
+  let filterRelation: string | undefined;
+  let textQuery = query.trim();
+
+  const entMatch = textQuery.match(/entity:([^\s]+)/i);
+  if (entMatch) {
+    filterEntity = entMatch[1];
+    textQuery = textQuery.replace(entMatch[0], '').trim();
+  }
+  const relMatch = textQuery.match(/rel(?:ation)?:([^\s]+)/i);
+  if (relMatch) {
+    filterRelation = relMatch[1];
+    textQuery = textQuery.replace(relMatch[0], '').trim();
+  }
+
   // Warm up V8 engine cache
   await searchDirectIndexedDB(query, 10);
-  await activeEngram.search({ query, limit: 10 });
+  await activeEngram.search({
+    query: textQuery || undefined,
+    entity: filterEntity,
+    relation: filterRelation,
+    limit: 10,
+  });
 
   // 1. Measure Direct IndexedDB search
   let idbDurationTotal = 0;
@@ -146,38 +167,43 @@ export async function runSearchBenchmark(
   }
   const avgIdbMs = Number((idbDurationTotal / iterations).toFixed(2));
 
-  // 2. Measure Engram-ts with Lunr.js search
-  let lunrDurationTotal = 0;
-  let lunrCount = 0;
-  let lunrSamples: Array<{ title: string; score: number }> = [];
+  // 2. Measure Engram-ts search
+  let engramDurationTotal = 0;
+  let engramCount = 0;
+  let engramSamples: Array<{ title: string; score: number }> = [];
 
   for (let i = 0; i < iterations; i++) {
     const t0 = performance.now();
-    const lunrRes = await activeEngram.search({ query, limit: 50 });
+    const engramRes = await activeEngram.search({
+      query: textQuery || undefined,
+      entity: filterEntity,
+      relation: filterRelation,
+      limit: 50,
+    });
     const elapsed = performance.now() - t0;
-    lunrDurationTotal += elapsed;
-    lunrCount = lunrRes.length;
-    lunrSamples = lunrRes.slice(0, 3).map((r) => ({
+    engramDurationTotal += elapsed;
+    engramCount = engramRes.length;
+    engramSamples = engramRes.slice(0, 3).map((r) => ({
       title: r.header.title,
       score: Number(r.score.toFixed(3)),
     }));
   }
-  const avgLunrMs = Number((lunrDurationTotal / iterations).toFixed(2));
+  const avgEngramMs = Number((engramDurationTotal / iterations).toFixed(2));
 
   // Speedup multiplier calculation
-  const safeLunr = Math.max(avgLunrMs, 0.05);
-  const speedup = Number((avgIdbMs / safeLunr).toFixed(1));
+  const safeEngram = Math.max(avgEngramMs, 0.05);
+  const speedup = Number((avgIdbMs / safeEngram).toFixed(1));
 
   return {
     query,
     totalRecords,
     indexedDbTimeMs: avgIdbMs,
-    lunrTimeMs: avgLunrMs,
+    lunrTimeMs: avgEngramMs,
     speedup,
     indexedDbMatches: idbCount,
-    lunrMatches: lunrCount,
+    lunrMatches: engramCount,
     indexedDbSample: idbSamples,
-    lunrSample: lunrSamples,
+    lunrSample: engramSamples,
     timestamp: new Date().toLocaleTimeString(),
   };
 }

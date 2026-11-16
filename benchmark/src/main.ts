@@ -56,12 +56,11 @@ const PRESET_KEYWORDS = [
   'database',
   'indexeddb',
   'lunr',
-  'refactor',
   'token',
   'cache',
-  'memory',
-  'concurrency',
-  'pipeline',
+  'entity:src/auth/jwt-service.ts',
+  'entity:PostgresConnectionPool',
+  'entity:src/storage/dexie-store.ts rel:fixes',
 ];
 
 function currentTheme(): 'light' | 'dark' {
@@ -236,7 +235,7 @@ function renderSearchSection(): string {
             name="query" 
             id="query-input"
             value="${escapeHtml(searchQuery)}" 
-            placeholder="Enter a keyword to search (e.g. database, refactor, token)..." 
+            placeholder="Search keywords or entity filters (e.g. database, entity:src/auth/jwt-service.ts)..." 
             required 
             ${!hasData || isBusy ? 'disabled' : ''} 
           />

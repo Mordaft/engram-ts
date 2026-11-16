@@ -3,6 +3,7 @@ import type {
   MemoryDocument,
   MemoryHeader,
   MemoryRecord,
+  MemoryRelationRecord,
 } from '../types/memory';
 
 export interface MemoryStore {
@@ -11,5 +12,7 @@ export interface MemoryStore {
   getDocument(id: string): Promise<MemoryDocument | undefined>;
   listHeaders(): Promise<MemoryHeader[]>;
   listRecords(): Promise<MemoryRecord[]>;
+  listRelations(memoryId?: string): Promise<MemoryRelationRecord[]>;
+  getMemoriesByEntity(entity: string, relation?: string, project?: string): Promise<MemoryHeader[]>;
   close(): void;
 }
